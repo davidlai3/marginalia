@@ -17,28 +17,39 @@ Rules:
 - Use branches for error paths and conditionals. One level only.
 - Do not number the steps yourself.`;
 
-export async function startMcpServer(opts: { root: string; assetDir: string }): Promise<void> {
-  const store = new LayerStore();
-
-  // Memoise the in-flight promise, not the resolved handle. `viewerPromise`
-  // is checked and assigned synchronously (no await between them), so two
-  // emit_layer calls that race ahead of the first startViewer() resolving
-  // still see the same promise and land on the same viewer.
+/**
+ * Wrap a viewer-starting thunk so concurrent callers share one in-flight
+ * attempt instead of racing separate ones. The in-flight *promise* is
+ * memoised, and the check-and-assign happens synchronously (no `await`
+ * between them) so two calls that both arrive before `start()` resolves
+ * still observe the same promise and land on the same handle.
+ *
+ * A rejection clears the memo before rethrowing: a failed startup should not
+ * permanently brick emit_layer for the rest of the process, so both racing
+ * callers see the rejection but the next call gets a fresh attempt instead
+ * of forever replaying a stale rejection.
+ */
+export function memoizeViewerStart(
+  start: () => Promise<ViewerHandle>,
+): () => Promise<ViewerHandle> {
   let viewerPromise: Promise<ViewerHandle> | null = null;
-  const ensureViewer = (): Promise<ViewerHandle> => {
+  return (): Promise<ViewerHandle> => {
     if (viewerPromise === null) {
-      viewerPromise = startViewer({ root: opts.root, store, assetDir: opts.assetDir }).catch(
-        (err: unknown) => {
-          // A failed startup should not permanently brick emit_layer for the
-          // rest of the process: clear the memo so the next emit gets a
-          // fresh attempt instead of forever replaying a stale rejection.
-          viewerPromise = null;
-          throw err;
-        },
-      );
+      viewerPromise = start().catch((err: unknown) => {
+        viewerPromise = null;
+        throw err;
+      });
     }
     return viewerPromise;
   };
+}
+
+export async function startMcpServer(opts: { root: string; assetDir: string }): Promise<void> {
+  const store = new LayerStore();
+
+  const ensureViewer = memoizeViewerStart(() =>
+    startViewer({ root: opts.root, store, assetDir: opts.assetDir }),
+  );
 
   const emit = createEmitter({
     root: opts.root,
