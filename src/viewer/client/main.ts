@@ -39,14 +39,41 @@ function escapeHtml(s: string): string {
   return d.innerHTML;
 }
 
-async function loadSection(section: HTMLElement, range: { start: number; end: number }): Promise<void> {
+/**
+ * Fetch a range for a section and fill it in.
+ *
+ * When `exact` is true the padded server response is sliced back down to
+ * exactly `range` before filling — used for the initial render, which must
+ * show only the anchor's lines, not the ±CONTEXT_LINES padding. When false
+ * (the default) the full padded response is used as-is — used by the expand
+ * button, so the shown range actually grows on each click.
+ *
+ * On failure, writes an error message into the section's <code> and clears
+ * its pending flag so the section reads as resolved rather than stuck loading.
+ */
+async function loadSection(
+  section: HTMLElement,
+  range: { start: number; end: number },
+  exact = false,
+): Promise<void> {
   const body = await fetchContext(section.dataset.file ?? "", range.start, range.end);
   if (!body) {
     const code = section.querySelector("code");
-    if (code) code.textContent = "(could not read this file)";
+    if (code) {
+      code.textContent = "(could not read this file)";
+      delete code.dataset.pending;
+    }
     return;
   }
-  fillHunk(section, body, document);
+  const toFill = exact
+    ? {
+        ...body,
+        start_line: range.start,
+        end_line: range.end,
+        lines: body.lines.slice(range.start - body.start_line, range.end - body.start_line + 1),
+      }
+    : body;
+  fillHunk(section, toFill, document);
   highlight(section);
 }
 
@@ -58,12 +85,7 @@ function draw(layer: NumberedLayer): void {
     const end = Number(section.dataset.end);
     // The server pads by CONTEXT_LINES, so ask for the exact anchor range
     // first and let the expander widen from there.
-    void fetchContext(section.dataset.file ?? "", start, end).then((body) => {
-      if (!body) return;
-      const exact = body.lines.slice(start - body.start_line, end - body.start_line + 1);
-      fillHunk(section, { ...body, start_line: start, end_line: end, lines: exact }, document);
-      highlight(section);
-    });
+    void loadSection(section, { start, end }, true);
 
     section.querySelector("button.expand")?.addEventListener("click", () => {
       void loadSection(section, expandedRange(section));
