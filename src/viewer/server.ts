@@ -103,6 +103,9 @@ function handle(req: IncomingMessage, res: ServerResponse, opts: ViewerOptions, 
     case "/client/main.js":
       sendFile(res, join(opts.assetDir, "main.js"), "text/javascript; charset=utf-8");
       return;
+    case "/client/hljs.css":
+      sendFile(res, join(opts.assetDir, "hljs.css"), "text/css; charset=utf-8");
+      return;
     case "/api/layer":
       send(res, 200, { layer: opts.store.get() });
       return;

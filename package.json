@@ -6,7 +6,7 @@
   "engines": { "node": ">=20.0.0" },
   "scripts": {
     "build": "tsc && npm run build:client",
-    "build:client": "esbuild src/viewer/client/main.ts --bundle --format=esm --outfile=dist/client/main.js",
+    "build:client": "esbuild src/viewer/client/main.ts --bundle --format=esm --outfile=dist/client/main.js && cp src/viewer/client/index.html dist/client/index.html && cp node_modules/highlight.js/styles/atom-one-dark.css dist/client/hljs.css",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
