@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { resolveAnchor, resolveLayerAnchors } from "../src/layer/anchor.js";
+import { resolveAnchor, resolveLayerAnchors, readFileLines } from "../src/layer/anchor.js";
 import type { LayerInput } from "../src/layer/schema.js";
 
 const lines = [
@@ -70,6 +70,10 @@ beforeAll(() => {
   mkdirSync(join(root, "src"), { recursive: true });
   writeFileSync(join(root, "src", "a.ts"), "alpha\nbravo\ncharlie\ndelta\n");
   writeFileSync(join(root, "src", "b.ts"), "echo\nfoxtrot\n");
+  writeFileSync(join(root, "src", "trailing-nl.ts"), "one\ntwo\nthree\n");
+  writeFileSync(join(root, "src", "no-trailing-nl.ts"), "one\ntwo\nthree");
+  writeFileSync(join(root, "src", "blank-last-line.ts"), "a\n\n");
+  writeFileSync(join(root, "src", "empty.ts"), "");
 });
 
 afterAll(() => rmSync(root, { recursive: true, force: true }));
@@ -136,5 +140,31 @@ describe("resolveLayerAnchors", () => {
       steps: [mk(), mk({ file: "src/b.ts", start_line: 1, end_line: 1, first_line_text: "echo" })],
     };
     expect(resolveLayerAnchors(root, layer).ok).toBe(true);
+  });
+});
+
+describe("readFileLines", () => {
+  it("does not produce a phantom trailing element for a file ending in a newline", () => {
+    const result = readFileLines(join(root, "src", "trailing-nl.ts"));
+    expect(result).toEqual(["one", "two", "three"]);
+  });
+
+  it("produces the same line count for a file not ending in a newline", () => {
+    const result = readFileLines(join(root, "src", "no-trailing-nl.ts"));
+    expect(result).toEqual(["one", "two", "three"]);
+  });
+
+  it("keeps a genuinely blank last line", () => {
+    const result = readFileLines(join(root, "src", "blank-last-line.ts"));
+    expect(result).toEqual(["a", ""]);
+  });
+
+  it("pins the behavior for an empty file", () => {
+    // An empty file has no trailing newline to strip, so it falls through to
+    // "".split("\n"), which yields a single empty-string element rather than
+    // an empty array. Pinned here so a future change to this edge is
+    // intentional rather than accidental.
+    const result = readFileLines(join(root, "src", "empty.ts"));
+    expect(result).toEqual([""]);
   });
 });

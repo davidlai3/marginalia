@@ -48,7 +48,16 @@ export function resolveAnchor(lines: string[], target: AnchorTarget): AnchorResu
 }
 
 export function readFileLines(path: string): string[] {
-  return readFileSync(path, "utf8").split("\n");
+  let text = readFileSync(path, "utf8");
+  // A file on disk almost always ends in a trailing newline; naively
+  // splitting on "\n" would then produce a phantom empty element past the
+  // real last line, inflating length for the end_line clamp and the window
+  // search. Strip exactly one trailing newline (CRLF or LF) so line counts
+  // match what an editor or `wc -l` would report. A file that genuinely ends
+  // in a blank line ("a\n\n") still keeps that blank line.
+  if (text.endsWith("\r\n")) text = text.slice(0, -2);
+  else if (text.endsWith("\n")) text = text.slice(0, -1);
+  return text.split("\n");
 }
 
 export interface BadAnchor {
