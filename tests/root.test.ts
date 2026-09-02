@@ -16,6 +16,7 @@ beforeAll(() => {
   writeFileSync(join(root, "src", "a.ts"), "export const a = 1;\n");
   writeFileSync(join(outside, "secret.txt"), "nope\n");
   symlinkSync(join(outside, "secret.txt"), join(root, "escape.txt"));
+  symlinkSync(outside, join(root, "linkdir"), "dir");
 });
 
 afterAll(() => rmSync(root, { recursive: true, force: true }));
@@ -43,5 +44,13 @@ describe("resolveInRoot", () => {
 
   it("rejects the root itself", () => {
     expect(() => resolveInRoot(root, ".")).toThrow(PathOutsideRootError);
+  });
+
+  it("rejects a nested non-existent path beneath a symlinked directory escaping the root", () => {
+    // `linkdir` -> `outside`, and `outside/sub` does not exist. The
+    // candidate path is two levels below the symlink, so the containment
+    // check must walk up past both missing segments to find `linkdir`
+    // itself before it can discover the escape.
+    expect(() => resolveInRoot(root, "linkdir/sub/newfile.txt")).toThrow(PathOutsideRootError);
   });
 });

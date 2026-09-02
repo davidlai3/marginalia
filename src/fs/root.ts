@@ -27,14 +27,31 @@ export function resolveInRoot(root: string, requested: string): string {
   return real;
 }
 
+/**
+ * Resolve `p` as far as it exists on disk, following symlinks all the way
+ * down. When `p` (or some suffix of it) does not exist yet, walk upward
+ * component by component until an ancestor that does exist is found,
+ * `realpathSync` that ancestor (resolving any symlinked directory in the
+ * chain), and re-append the non-existent trailing segments. This ensures a
+ * symlinked directory two or more levels above a missing leaf is still
+ * caught by the containment check in `resolveInRoot`.
+ */
 function realpathBestEffort(p: string): string {
-  try {
-    return realpathSync(p);
-  } catch {
+  const pending: string[] = [];
+  let current = p;
+
+  for (;;) {
     try {
-      return join(realpathSync(dirname(p)), basename(p));
+      const real = realpathSync(current);
+      return pending.length === 0 ? real : join(real, ...pending.reverse());
     } catch {
-      return p;
+      const parent = dirname(current);
+      if (parent === current) {
+        // Reached the filesystem root without finding an existing ancestor.
+        return p;
+      }
+      pending.push(basename(current));
+      current = parent;
     }
   }
 }
