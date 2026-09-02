@@ -97,4 +97,58 @@ describe("emit_layer", () => {
     expect(r.ok).toBe(true);
     expect(store.get()?.steps[0]?.start_line).toBe(2);
   });
+
+  it("starts exactly one viewer when emits race concurrently", async () => {
+    // Regression test for a race in the ensureViewer memoization pattern:
+    // `viewer ??= await startViewer(...)` checks `viewer` before the await
+    // but assigns after it, so two calls that both arrive before the first
+    // startViewer() resolves both pass the check and both start a viewer.
+    // The fix memoizes the in-flight *promise*, assigned synchronously
+    // (no await between the check and the assignment), which this test's
+    // ensureViewer mirrors.
+    const concRoot = mkdtempSync(join(tmpdir(), "marginalia-emit-conc-"));
+    const concAssetDir = mkdtempSync(join(tmpdir(), "marginalia-emit-conc-assets-"));
+    mkdirSync(join(concRoot, "src"), { recursive: true });
+    writeFileSync(join(concRoot, "src", "a.ts"), "alpha\nbravo\ncharlie\n");
+    writeFileSync(join(concAssetDir, "index.html"), "<!doctype html>");
+    writeFileSync(join(concAssetDir, "main.js"), "");
+
+    const concStore = new LayerStore();
+    let concStarts = 0;
+    let concViewerPromise: Promise<ViewerHandle> | null = null;
+    const concEnsureViewer = (): Promise<ViewerHandle> => {
+      if (concViewerPromise === null) {
+        concStarts++;
+        concViewerPromise = startViewer({
+          root: concRoot,
+          store: concStore,
+          assetDir: concAssetDir,
+          port: 0,
+        });
+      }
+      return concViewerPromise;
+    };
+    const concEmit = createEmitter({
+      root: concRoot,
+      assetDir: concAssetDir,
+      store: concStore,
+      ensureViewer: concEnsureViewer,
+    });
+
+    try {
+      const [ra, rb] = await Promise.all([
+        concEmit({ title: "A", steps: [step] }),
+        concEmit({ title: "B", steps: [step] }),
+      ]);
+      expect(concStarts).toBe(1);
+      expect(ra.ok).toBe(true);
+      expect(rb.ok).toBe(true);
+      expect(ra.url).toBe(rb.url);
+    } finally {
+      const concViewer = await concViewerPromise;
+      await concViewer?.close();
+      rmSync(concRoot, { recursive: true, force: true });
+      rmSync(concAssetDir, { recursive: true, force: true });
+    }
+  });
 });

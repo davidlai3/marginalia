@@ -19,16 +19,32 @@ Rules:
 
 export async function startMcpServer(opts: { root: string; assetDir: string }): Promise<void> {
   const store = new LayerStore();
-  let viewer: ViewerHandle | null = null;
+
+  // Memoise the in-flight promise, not the resolved handle. `viewerPromise`
+  // is checked and assigned synchronously (no await between them), so two
+  // emit_layer calls that race ahead of the first startViewer() resolving
+  // still see the same promise and land on the same viewer.
+  let viewerPromise: Promise<ViewerHandle> | null = null;
+  const ensureViewer = (): Promise<ViewerHandle> => {
+    if (viewerPromise === null) {
+      viewerPromise = startViewer({ root: opts.root, store, assetDir: opts.assetDir }).catch(
+        (err: unknown) => {
+          // A failed startup should not permanently brick emit_layer for the
+          // rest of the process: clear the memo so the next emit gets a
+          // fresh attempt instead of forever replaying a stale rejection.
+          viewerPromise = null;
+          throw err;
+        },
+      );
+    }
+    return viewerPromise;
+  };
 
   const emit = createEmitter({
     root: opts.root,
     assetDir: opts.assetDir,
     store,
-    ensureViewer: async () => {
-      viewer ??= await startViewer({ root: opts.root, store, assetDir: opts.assetDir });
-      return viewer;
-    },
+    ensureViewer,
   });
 
   const server = new McpServer({ name: "marginalia", version: "0.1.0" });
