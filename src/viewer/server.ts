@@ -3,6 +3,7 @@ import { randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { AddressInfo } from "node:net";
+import { WebSocketServer } from "ws";
 import { resolveInRoot } from "../fs/root.js";
 import { readFileLines } from "../layer/anchor.js";
 import type { LayerStore } from "./state.js";
@@ -40,15 +41,45 @@ export async function startViewer(opts: ViewerOptions): Promise<ViewerHandle> {
   await new Promise<void>((resolve) => server.listen(opts.port ?? 0, host, resolve));
   const port = (server.address() as AddressInfo).port;
 
+  const wss = new WebSocketServer({ noServer: true });
+
+  server.on("upgrade", (req, socket, head) => {
+    const url = new URL(req.url ?? "/", "http://localhost");
+    const ok =
+      url.pathname === "/ws" &&
+      (url.searchParams.get("key") === key || readCookie(req.headers.cookie, "mg_key") === key);
+    if (!ok) {
+      socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
+      socket.destroy();
+      return;
+    }
+    wss.handleUpgrade(req, socket, head, (ws) => {
+      const current = opts.store.get();
+      if (current) ws.send(JSON.stringify({ type: "layer", layer: current }));
+      wss.emit("connection", ws, req);
+    });
+  });
+
+  const unsubscribe = opts.store.subscribe((layer) => {
+    const payload = JSON.stringify({ type: "layer", layer });
+    for (const client of wss.clients) {
+      if (client.readyState === client.OPEN) client.send(payload);
+    }
+  });
+
   return {
     url: `http://localhost:${port}/?key=${key}`,
     port,
     key,
     store: opts.store,
-    close: () =>
-      new Promise<void>((resolve, reject) =>
+    close: async () => {
+      unsubscribe();
+      for (const client of wss.clients) client.terminate();
+      wss.close();
+      await new Promise<void>((resolve, reject) =>
         server.close((err) => (err ? reject(err) : resolve())),
-      ),
+      );
+    },
   };
 }
 
