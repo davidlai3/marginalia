@@ -99,6 +99,10 @@ describe("GET /api/context", () => {
   it("404s a missing file", async () => {
     expect((await ctx("file=src/nope.ts&start=1&end=1")).status).toBe(404);
   });
+
+  it("404s a range starting beyond the end of the file", async () => {
+    expect((await ctx("file=src/a.ts&start=1000&end=1005")).status).toBe(404);
+  });
 });
 
 describe("static assets", () => {

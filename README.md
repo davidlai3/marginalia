@@ -27,8 +27,8 @@ Then just ask:
 
 > show me how a request gets authenticated
 
-The agent reads the code, emits a layer, and a browser tab opens with the
-annotated path.
+The agent reads the code, emits a layer, and hands back a URL to open — a
+numbered, annotated path over your real files.
 
 ## How it works
 
@@ -53,4 +53,5 @@ is worse than no tool at all.
 npm install
 npm run build
 npm test
+npm run typecheck
 ```

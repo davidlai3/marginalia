@@ -138,6 +138,10 @@ function sendContext(res: ServerResponse, root: string, url: URL): void {
 
   const startLine = Math.max(1, start - CONTEXT_LINES);
   const endLine = Math.min(lines.length, end + CONTEXT_LINES);
+  if (startLine > endLine) {
+    send(res, 404, { error: "cannot read file" });
+    return;
+  }
   send(res, 200, {
     file,
     start_line: startLine,
