@@ -4,6 +4,13 @@ import type { LayerInput } from "./schema.js";
 
 export const SEARCH_RADIUS = 40;
 
+/**
+ * Longest excerpt one step may render. An agent that emits a sloppy wide range
+ * would otherwise be clamped only at end-of-file, burying its note in a wall of
+ * code. A reader can expand a tight hunk; they cannot un-see a huge one.
+ */
+export const MAX_HUNK_LINES = 40;
+
 export type AnchorOk = { ok: true; start_line: number; end_line: number };
 export type AnchorFail = {
   ok: false;
@@ -24,7 +31,7 @@ export function resolveAnchor(lines: string[], target: AnchorTarget): AnchorResu
   const want = norm(target.first_line_text);
   const requested = target.start_line - 1;
   const atRequested = lines[requested];
-  const span = target.end_line - target.start_line;
+  const span = Math.min(target.end_line - target.start_line, MAX_HUNK_LINES - 1);
 
   const accept = (startIndex: number): AnchorOk => ({
     ok: true,

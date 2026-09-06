@@ -12,7 +12,7 @@ Use this instead of explaining code in prose. Each step is a short real excerpt 
 Rules:
 - Order steps the way control flow actually visits them, across files.
 - first_line_text must be the exact text of the line at start_line. It is checked against disk, and a mismatch rejects the whole layer.
-- Keep excerpts tight (3-12 lines). The reader can expand for surrounding context.
+- Keep excerpts tight (3-12 lines). The reader can expand for surrounding context. Anything longer than 40 lines is truncated to 40.
 - Use edge_label to say how flow reaches the next step, e.g. "calls verify()".
 - Use branches for error paths and conditionals. One level only.
 - Do not number the steps yourself.`;

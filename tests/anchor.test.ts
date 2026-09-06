@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { resolveAnchor, resolveLayerAnchors, readFileLines } from "../src/layer/anchor.js";
+import { resolveAnchor, resolveLayerAnchors, readFileLines, MAX_HUNK_LINES } from "../src/layer/anchor.js";
 import type { LayerInput } from "../src/layer/schema.js";
 
 const lines = [
@@ -54,6 +54,18 @@ describe("resolveAnchor", () => {
   it("reports found as null when the requested line is past the end", () => {
     const r = resolveAnchor(lines, { start_line: 99, end_line: 99, first_line_text: "nope" });
     expect(r).toMatchObject({ ok: false, found: null });
+  });
+
+  it("caps a sloppy wide span at MAX_HUNK_LINES instead of running to EOF", () => {
+    const long = Array.from({ length: 500 }, (_, i) => `line ${i + 1}`);
+    const r = resolveAnchor(long, { start_line: 10, end_line: 400, first_line_text: "line 10" });
+    expect(r).toEqual({ ok: true, start_line: 10, end_line: 10 + MAX_HUNK_LINES - 1 });
+  });
+
+  it("leaves a span shorter than the cap alone", () => {
+    const long = Array.from({ length: 500 }, (_, i) => `line ${i + 1}`);
+    const r = resolveAnchor(long, { start_line: 10, end_line: 14, first_line_text: "line 10" });
+    expect(r).toEqual({ ok: true, start_line: 10, end_line: 14 });
   });
 
   it("does not search beyond the radius", () => {
