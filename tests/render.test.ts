@@ -89,8 +89,15 @@ describe("renderLayer", () => {
     expect(codes).toHaveLength(3);
   });
 
-  it("gives every step an expand control", () => {
-    expect(render().querySelectorAll("button.expand")).toHaveLength(3);
+  it("gives every step up, down and reset controls", () => {
+    const el = render();
+    expect(el.querySelectorAll("button.expand")).toHaveLength(9);
+    const first = el.querySelector("section.step") as HTMLElement;
+    expect([...first.querySelectorAll<HTMLElement>("button.expand")].map((b) => b.dataset.dir)).toEqual([
+      "up",
+      "down",
+      "reset",
+    ]);
   });
 
   it("escapes rather than interprets note markup", () => {
