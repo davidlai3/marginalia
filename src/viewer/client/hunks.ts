@@ -32,31 +32,13 @@ export function fillHunk(section: HTMLElement, body: ContextResponse, doc: Docum
   section.dataset.shownEnd = String(body.end_line);
 }
 
-/** Lines each expand click reveals. */
-export const CONTEXT_LINES = 10;
-
-export interface Range {
-  start: number;
-  end: number;
-}
-
-/** The anchor's own range — what "reset" goes back to. Never mutated. */
-export function anchorRange(section: HTMLElement): Range {
-  return { start: Number(section.dataset.start), end: Number(section.dataset.end) };
-}
-
-/** What the section currently shows, falling back to the anchor before first fill. */
-export function shownRange(section: HTMLElement): Range {
-  return {
-    start: Number(section.dataset.shownStart ?? section.dataset.start),
-    end: Number(section.dataset.shownEnd ?? section.dataset.end),
-  };
-}
-
-/** The range an expand control should request. */
-export function rangeFor(section: HTMLElement, dir: string): Range {
-  const shown = shownRange(section);
-  if (dir === "up") return { start: Math.max(1, shown.start - CONTEXT_LINES), end: shown.end };
-  if (dir === "down") return { start: shown.start, end: shown.end + CONTEXT_LINES };
-  return anchorRange(section);
+/**
+ * The range to ask the server for next. The server widens by CONTEXT_LINES on
+ * both sides, so passing back what is already shown is what makes each click
+ * reveal more.
+ */
+export function expandedRange(section: HTMLElement): { start: number; end: number } {
+  const start = Number(section.dataset.shownStart ?? section.dataset.start);
+  const end = Number(section.dataset.shownEnd ?? section.dataset.end);
+  return { start, end };
 }

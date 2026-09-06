@@ -8,6 +8,8 @@ import { resolveInRoot } from "../fs/root.js";
 import { readFileLines } from "../layer/anchor.js";
 import type { LayerStore } from "./state.js";
 
+export const CONTEXT_LINES = 20;
+
 export interface ViewerHandle {
   url: string;
   port: number;
@@ -134,18 +136,17 @@ function sendContext(res: ServerResponse, root: string, url: URL): void {
     return;
   }
 
-  // Exactly the range asked for, clamped to the file. The client owns how far
-  // each expand step reaches, so the two directions can differ.
-  const endLine = Math.min(lines.length, end);
-  if (start > endLine) {
+  const startLine = Math.max(1, start - CONTEXT_LINES);
+  const endLine = Math.min(lines.length, end + CONTEXT_LINES);
+  if (startLine > endLine) {
     send(res, 404, { error: "cannot read file" });
     return;
   }
   send(res, 200, {
     file,
-    start_line: start,
+    start_line: startLine,
     end_line: endLine,
-    lines: lines.slice(start - 1, endLine),
+    lines: lines.slice(startLine - 1, endLine),
   });
 }
 

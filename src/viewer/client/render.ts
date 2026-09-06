@@ -2,13 +2,6 @@ import type { NumberedBranch, NumberedBranchStep, NumberedLayer, NumberedStep } 
 
 type AnyStep = NumberedStep | NumberedBranchStep;
 
-/** [data-dir, button label, accessible name] */
-const EXPAND_CONTROLS = [
-  ["up", "↑", "show 10 more lines above"],
-  ["down", "↓", "show 10 more lines below"],
-  ["reset", "reset", "back to the original excerpt"],
-] as const;
-
 export function renderLayer(layer: NumberedLayer, doc: Document): HTMLElement {
   const root = el(doc, "div", "layer");
 
@@ -56,20 +49,13 @@ function renderStep(step: AnyStep, doc: Document): HTMLElement {
   const header = el(doc, "div", "hunk-header");
   header.textContent = `${step.file}:${step.start_line}-${step.end_line}`;
 
-  const controls = el(doc, "div", "hunk-controls");
-  for (const [dir, label, aria] of EXPAND_CONTROLS) {
-    const btn = doc.createElement("button");
-    btn.className = "expand";
-    btn.type = "button";
-    btn.dataset.dir = dir;
-    btn.textContent = label;
-    btn.title = aria;
-    btn.setAttribute("aria-label", aria);
-    controls.append(btn);
-  }
+  const expand = doc.createElement("button");
+  expand.className = "expand";
+  expand.type = "button";
+  expand.textContent = "expand";
 
   const headerRow = el(doc, "div", "hunk-header-row");
-  headerRow.append(header, controls);
+  headerRow.append(header, expand);
 
   const pre = doc.createElement("pre");
   pre.className = "hunk";

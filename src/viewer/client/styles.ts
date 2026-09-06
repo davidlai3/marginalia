@@ -15,7 +15,6 @@ body { margin: 0; background: var(--bg); color: var(--fg);
 .hunk-header-row { grid-area: header; display: flex; align-items: baseline;
   gap: 10px; padding: 6px 0 3px; }
 .hunk-header { font: 11px var(--mono); color: var(--dim); letter-spacing: .02em; }
-.hunk-controls { display: flex; gap: 4px; }
 button.expand { font: 10px var(--mono); color: var(--dim); background: none;
   border: 1px solid var(--rule); border-radius: 3px; padding: 1px 6px; cursor: pointer; }
 button.expand:hover { color: var(--fg); border-color: var(--dim); }

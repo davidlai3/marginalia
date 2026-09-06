@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect } from "vitest";
-import { fillHunk, rangeFor } from "../src/viewer/client/hunks.js";
+import { fillHunk, expandedRange } from "../src/viewer/client/hunks.js";
 import { renderLayer } from "../src/viewer/client/render.js";
 import type { NumberedLayer } from "../src/layer/number.js";
 
@@ -50,35 +50,14 @@ describe("fillHunk", () => {
   });
 });
 
-describe("rangeFor", () => {
-  const shown = (s: HTMLElement, start: number, end: number) =>
-    fillHunk(s, { file: "a.ts", start_line: start, end_line: end, lines: [] }, document);
-
-  it("expands up from the anchor before anything is shown", () => {
-    expect(rangeFor(section(), "up")).toEqual({ start: 1, end: 11 });
+describe("expandedRange", () => {
+  it("uses the anchor range before anything is shown", () => {
+    expect(expandedRange(section())).toEqual({ start: 9, end: 11 });
   });
 
-  it("expands up from the currently shown range, leaving the end alone", () => {
+  it("widens from the currently shown range", () => {
     const s = section();
-    shown(s, 30, 40);
-    expect(rangeFor(s, "up")).toEqual({ start: 20, end: 40 });
-  });
-
-  it("expands down from the currently shown range, leaving the start alone", () => {
-    const s = section();
-    shown(s, 30, 40);
-    expect(rangeFor(s, "down")).toEqual({ start: 30, end: 50 });
-  });
-
-  it("clamps upward expansion at line 1 rather than going negative", () => {
-    const s = section();
-    shown(s, 4, 20);
-    expect(rangeFor(s, "up")).toEqual({ start: 1, end: 20 });
-  });
-
-  it("resets to the anchor range however far it was expanded", () => {
-    const s = section();
-    shown(s, 1, 400);
-    expect(rangeFor(s, "reset")).toEqual({ start: 9, end: 11 });
+    fillHunk(s, { file: "a.ts", start_line: 4, end_line: 20, lines: [] }, document);
+    expect(expandedRange(s)).toEqual({ start: 4, end: 20 });
   });
 });

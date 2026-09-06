@@ -2,7 +2,7 @@ import hljs from "highlight.js";
 import type { NumberedLayer } from "../../layer/number.js";
 import { renderLayer } from "./render.js";
 import { STYLES } from "./styles.js";
-import { fillHunk, rangeFor, anchorRange, type ContextResponse, type Range } from "./hunks.js";
+import { fillHunk, expandedRange, type ContextResponse } from "./hunks.js";
 
 const app = document.getElementById("app") as HTMLElement;
 
@@ -40,13 +40,22 @@ function escapeHtml(s: string): string {
 }
 
 /**
- * Fetch a range for a section and fill it in. The server returns exactly the
- * range asked for, clamped to the file, so the response is used as-is.
+ * Fetch a range for a section and fill it in.
+ *
+ * When `exact` is true the padded server response is sliced back down to
+ * exactly `range` before filling — used for the initial render, which must
+ * show only the anchor's lines, not the ±CONTEXT_LINES padding. When false
+ * (the default) the full padded response is used as-is — used by the expand
+ * button, so the shown range actually grows on each click.
  *
  * On failure, writes an error message into the section's <code> and clears
  * its pending flag so the section reads as resolved rather than stuck loading.
  */
-async function loadSection(section: HTMLElement, range: Range): Promise<void> {
+async function loadSection(
+  section: HTMLElement,
+  range: { start: number; end: number },
+  exact = false,
+): Promise<void> {
   const body = await fetchContext(section.dataset.file ?? "", range.start, range.end);
   if (!body) {
     const code = section.querySelector("code");
@@ -56,7 +65,15 @@ async function loadSection(section: HTMLElement, range: Range): Promise<void> {
     }
     return;
   }
-  fillHunk(section, body, document);
+  const toFill = exact
+    ? {
+        ...body,
+        start_line: range.start,
+        end_line: range.end,
+        lines: body.lines.slice(range.start - body.start_line, range.end - body.start_line + 1),
+      }
+    : body;
+  fillHunk(section, toFill, document);
   highlight(section);
 }
 
@@ -64,13 +81,15 @@ function draw(layer: NumberedLayer): void {
   app.replaceChildren(renderLayer(layer, document));
 
   for (const section of Array.from(app.querySelectorAll<HTMLElement>("section.step"))) {
-    void loadSection(section, anchorRange(section));
+    const start = Number(section.dataset.start);
+    const end = Number(section.dataset.end);
+    // The server pads by CONTEXT_LINES, so ask for the exact anchor range
+    // first and let the expander widen from there.
+    void loadSection(section, { start, end }, true);
 
-    for (const btn of Array.from(section.querySelectorAll<HTMLButtonElement>("button.expand"))) {
-      btn.addEventListener("click", () => {
-        void loadSection(section, rangeFor(section, btn.dataset.dir ?? "reset"));
-      });
-    }
+    section.querySelector("button.expand")?.addEventListener("click", () => {
+      void loadSection(section, expandedRange(section));
+    });
   }
 }
 

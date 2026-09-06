@@ -69,25 +69,23 @@ describe("viewer server auth", () => {
 describe("GET /api/context", () => {
   const ctx = (qs: string) => fetch(`${base}/api/context?key=${viewer.key}&${qs}`);
 
-  it("returns exactly the range asked for", async () => {
+  it("expands a range by 20 lines on each side", async () => {
     const res = await ctx("file=src/a.ts&start=50&end=51");
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.start_line).toBe(50);
-    expect(body.end_line).toBe(51);
-    expect(body.lines).toHaveLength(2);
+    expect(body.start_line).toBe(30);
+    expect(body.end_line).toBe(71);
+    expect(body.lines).toHaveLength(42);
   });
 
-  it("returns the right lines, not just the right count", async () => {
-    const body = await (await ctx("file=src/a.ts&start=3&end=4")).json();
-    expect(body.lines).toEqual(["line 3", "line 4"]);
+  it("clamps at the start of the file", async () => {
+    const body = await (await ctx("file=src/a.ts&start=2&end=2")).json();
+    expect(body.start_line).toBe(1);
   });
 
-  it("clamps an end past the last line", async () => {
-    const body = await (await ctx("file=src/a.ts&start=99&end=140")).json();
-    expect(body.start_line).toBe(99);
+  it("clamps at the end of the file", async () => {
+    const body = await (await ctx("file=src/a.ts&start=99&end=100")).json();
     expect(body.end_line).toBe(100);
-    expect(body.lines).toHaveLength(2);
   });
 
   it("rejects a path outside the root", async () => {
