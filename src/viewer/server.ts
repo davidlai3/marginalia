@@ -152,7 +152,8 @@ function sendContext(res: ServerResponse, root: string, url: URL): void {
 function sendFile(res: ServerResponse, path: string, contentType: string): void {
   try {
     const body = readFileSync(path);
-    res.writeHead(200, { "content-type": contentType });
+    // Never cache: a rebuilt bundle must reach an already-open tab on reload.
+    res.writeHead(200, { "content-type": contentType, "cache-control": "no-store" });
     res.end(body);
   } catch {
     send(res, 404, { error: "asset not found" });
