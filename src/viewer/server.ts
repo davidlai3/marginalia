@@ -45,7 +45,7 @@ export async function startViewer(opts: ViewerOptions): Promise<ViewerHandle> {
     const url = new URL(req.url ?? "/", "http://localhost");
     const ok =
       url.pathname === "/ws" &&
-      (url.searchParams.get("key") === key || readCookie(req.headers.cookie, "mg_key") === key);
+      (url.searchParams.get("key") === key || readCookie(req.headers.cookie, "sn_key") === key);
     if (!ok) {
       socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
       socket.destroy();
@@ -84,14 +84,14 @@ export async function startViewer(opts: ViewerOptions): Promise<ViewerHandle> {
 function handle(req: IncomingMessage, res: ServerResponse, opts: ViewerOptions, key: string): void {
   const url = new URL(req.url ?? "/", "http://localhost");
   const queryKey = url.searchParams.get("key");
-  const cookieKey = readCookie(req.headers.cookie, "mg_key");
+  const cookieKey = readCookie(req.headers.cookie, "sn_key");
 
   if (queryKey !== key && cookieKey !== key) {
     send(res, 401, { error: "bad or missing session key" });
     return;
   }
   if (queryKey === key) {
-    res.setHeader("Set-Cookie", `mg_key=${key}; Path=/; SameSite=Strict; HttpOnly`);
+    res.setHeader("Set-Cookie", `sn_key=${key}; Path=/; SameSite=Strict; HttpOnly`);
   }
 
   switch (url.pathname) {

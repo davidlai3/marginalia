@@ -48,8 +48,8 @@ const connect = (url: string): Promise<{ ws: WebSocket; next: () => Promise<any>
   });
 
 beforeAll(async () => {
-  root = mkdtempSync(join(tmpdir(), "marginalia-ws-root-"));
-  assetDir = mkdtempSync(join(tmpdir(), "marginalia-ws-assets-"));
+  root = mkdtempSync(join(tmpdir(), "sidenote-ws-root-"));
+  assetDir = mkdtempSync(join(tmpdir(), "sidenote-ws-assets-"));
   writeFileSync(join(assetDir, "index.html"), "<!doctype html>");
   writeFileSync(join(assetDir, "main.js"), "");
   store = new LayerStore();

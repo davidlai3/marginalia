@@ -9,7 +9,7 @@ let root: string;
 let client: Client;
 
 beforeAll(async () => {
-  root = mkdtempSync(join(tmpdir(), "marginalia-e2e-"));
+  root = mkdtempSync(join(tmpdir(), "sidenote-e2e-"));
   mkdirSync(join(root, "src"), { recursive: true });
   writeFileSync(
     join(root, "src", "handler.ts"),

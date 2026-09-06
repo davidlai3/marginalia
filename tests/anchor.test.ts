@@ -78,7 +78,7 @@ describe("resolveAnchor", () => {
 let root: string;
 
 beforeAll(() => {
-  root = mkdtempSync(join(tmpdir(), "marginalia-anchor-"));
+  root = mkdtempSync(join(tmpdir(), "sidenote-anchor-"));
   mkdirSync(join(root, "src"), { recursive: true });
   writeFileSync(join(root, "src", "a.ts"), "alpha\nbravo\ncharlie\ndelta\n");
   writeFileSync(join(root, "src", "b.ts"), "echo\nfoxtrot\n");

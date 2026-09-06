@@ -18,14 +18,14 @@ const layer = {
 };
 
 beforeAll(async () => {
-  root = mkdtempSync(join(tmpdir(), "marginalia-viewer-"));
-  assetDir = mkdtempSync(join(tmpdir(), "marginalia-assets-"));
+  root = mkdtempSync(join(tmpdir(), "sidenote-viewer-"));
+  assetDir = mkdtempSync(join(tmpdir(), "sidenote-assets-"));
   mkdirSync(join(root, "src"), { recursive: true });
   writeFileSync(
     join(root, "src", "a.ts"),
     Array.from({ length: 100 }, (_, i) => (i === 1 ? "bravo" : `line ${i + 1}`)).join("\n"),
   );
-  writeFileSync(join(assetDir, "index.html"), "<!doctype html><title>marginalia</title>");
+  writeFileSync(join(assetDir, "index.html"), "<!doctype html><title>sidenote</title>");
   writeFileSync(join(assetDir, "main.js"), "export const x = 1;");
 
   const store = new LayerStore();
@@ -56,13 +56,13 @@ describe("viewer server auth", () => {
   });
 
   it("accepts the key from a cookie", async () => {
-    const res = await fetch(`${base}/api/layer`, { headers: { cookie: `mg_key=${viewer.key}` } });
+    const res = await fetch(`${base}/api/layer`, { headers: { cookie: `sn_key=${viewer.key}` } });
     expect(res.status).toBe(200);
   });
 
   it("sets the cookie when the key arrives in the query", async () => {
     const res = await fetch(`${base}/?key=${viewer.key}`);
-    expect(res.headers.get("set-cookie")).toContain(`mg_key=${viewer.key}`);
+    expect(res.headers.get("set-cookie")).toContain(`sn_key=${viewer.key}`);
   });
 });
 
@@ -111,7 +111,7 @@ describe("static assets", () => {
   it("serves index.html at the root", async () => {
     const res = await fetch(`${base}/?key=${viewer.key}`);
     expect(res.headers.get("content-type")).toContain("text/html");
-    expect(await res.text()).toContain("marginalia");
+    expect(await res.text()).toContain("sidenote");
   });
 
   it("serves the client bundle", async () => {

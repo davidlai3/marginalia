@@ -12,6 +12,6 @@ const root = resolve(argValue("--root") ?? process.cwd());
 const assetDir = join(dirname(fileURLToPath(import.meta.url)), "client");
 
 startMcpServer({ root, assetDir }).catch((err) => {
-  process.stderr.write(`marginalia failed to start: ${String(err)}\n`);
+  process.stderr.write(`sidenote failed to start: ${String(err)}\n`);
   process.exit(1);
 });

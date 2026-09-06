@@ -1,8 +1,8 @@
 {
-  "name": "marginalia",
+  "name": "sidenote",
   "version": "0.1.0",
   "type": "module",
-  "bin": { "marginalia": "dist/index.js" },
+  "bin": { "sidenote": "dist/index.js" },
   "engines": { "node": ">=20.0.0" },
   "scripts": {
     "build": "tsc && npm run build:client",

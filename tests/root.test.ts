@@ -8,7 +8,7 @@ let root: string;
 let outside: string;
 
 beforeAll(() => {
-  const base = mkdtempSync(join(tmpdir(), "marginalia-root-"));
+  const base = mkdtempSync(join(tmpdir(), "sidenote-root-"));
   root = join(base, "repo");
   outside = join(base, "outside");
   mkdirSync(join(root, "src"), { recursive: true });

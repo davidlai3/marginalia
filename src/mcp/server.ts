@@ -58,7 +58,7 @@ export async function startMcpServer(opts: { root: string; assetDir: string }): 
     ensureViewer,
   });
 
-  const server = new McpServer({ name: "marginalia", version: "0.1.0" });
+  const server = new McpServer({ name: "sidenote", version: "0.1.0" });
 
   server.registerTool(
     "emit_layer",

@@ -23,8 +23,8 @@ const step = {
 };
 
 beforeAll(async () => {
-  root = mkdtempSync(join(tmpdir(), "marginalia-emit-"));
-  assetDir = mkdtempSync(join(tmpdir(), "marginalia-emit-assets-"));
+  root = mkdtempSync(join(tmpdir(), "sidenote-emit-"));
+  assetDir = mkdtempSync(join(tmpdir(), "sidenote-emit-assets-"));
   mkdirSync(join(root, "src"), { recursive: true });
   writeFileSync(join(root, "src", "a.ts"), "alpha\nbravo\ncharlie\n");
   writeFileSync(join(assetDir, "index.html"), "<!doctype html>");
