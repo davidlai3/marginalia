@@ -3,6 +3,8 @@ export interface ContextResponse {
   start_line: number;
   end_line: number;
   lines: string[];
+  /** Declaration the hunk sits inside, shown above it when it is out of view. */
+  header?: { line: number; text: string } | null;
 }
 
 /** Replace a step's code block with numbered source lines. */
@@ -11,25 +13,32 @@ export function fillHunk(section: HTMLElement, body: ContextResponse, doc: Docum
   if (!code) return;
 
   code.textContent = "";
+  if (body.header && body.header.line < body.start_line) {
+    code.append(lineRow(doc, body.header.line, body.header.text, "line header"));
+  }
   body.lines.forEach((line, i) => {
-    const row = doc.createElement("div");
-    row.className = "line";
-
-    const num = doc.createElement("span");
-    num.className = "lineno";
-    num.textContent = String(body.start_line + i);
-
-    const text = doc.createElement("span");
-    text.className = "linetext";
-    text.textContent = line;
-
-    row.append(num, text);
-    code.append(row);
+    code.append(lineRow(doc, body.start_line + i, line, "line"));
   });
 
   delete code.dataset.pending;
   section.dataset.shownStart = String(body.start_line);
   section.dataset.shownEnd = String(body.end_line);
+}
+
+function lineRow(doc: Document, n: number, line: string, className: string): HTMLElement {
+  const row = doc.createElement("div");
+  row.className = className;
+
+  const num = doc.createElement("span");
+  num.className = "lineno";
+  num.textContent = String(n);
+
+  const text = doc.createElement("span");
+  text.className = "linetext";
+  text.textContent = line;
+
+  row.append(num, text);
+  return row;
 }
 
 /** Lines each expand click reveals. */

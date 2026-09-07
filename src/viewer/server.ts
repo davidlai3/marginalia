@@ -6,6 +6,7 @@ import type { AddressInfo } from "node:net";
 import { WebSocketServer } from "ws";
 import { resolveInRoot } from "../fs/root.js";
 import { readFileLines } from "../layer/anchor.js";
+import { enclosingHeader } from "../layer/header.js";
 import type { LayerStore } from "./state.js";
 
 export interface ViewerHandle {
@@ -146,6 +147,7 @@ function sendContext(res: ServerResponse, root: string, url: URL): void {
     start_line: start,
     end_line: endLine,
     lines: lines.slice(start - 1, endLine),
+    header: enclosingHeader(lines, start),
   });
 }
 

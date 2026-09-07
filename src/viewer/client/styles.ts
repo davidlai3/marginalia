@@ -26,6 +26,9 @@ pre.hunk code { display: block; }
 .hunk .lineno { color: var(--dim); user-select: none; display: inline-block;
   width: 3.2em; text-align: right; margin-right: 12px; }
 
+.hunk .header { opacity: .6; border-bottom: 1px dashed var(--rule);
+  margin-bottom: 4px; padding-bottom: 3px; }
+
 .note { grid-area: note; display: flex; gap: 8px; align-items: flex-start; padding: 8px 0; }
 .badge { flex: none; display: inline-flex; align-items: center; justify-content: center;
   min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px;
