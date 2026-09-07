@@ -8,6 +8,8 @@ better to put the answer: a numbered reading path over your real files, in the
 order control flow visits them, with each note in the margin beside the code it
 describes. Nothing in your repository is modified.
 
+![sidenote](docs/screenshot.png)
+
 Layers are ephemeral by design. You ask a question, read the answer against live
 source, and throw it away. Nothing to commit, nothing to keep up to date.
 
